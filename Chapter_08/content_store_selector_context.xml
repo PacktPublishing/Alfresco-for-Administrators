@@ -1,0 +1,61 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE beans PUBLIC '-//SPRING//DTD BEAN//EN' 'http://www.springframework.org/dtd/spring-beans.dtd'>
+
+<beans>
+
+   <bean id="projectMarketingContentStore" class="org.alfresco.repo.content.filestore.FileContentStore">
+      <constructor-arg>
+         <value>${dir.root}/marketing</value>
+      </constructor-arg>
+   </bean>
+
+   <bean id="projectHRContentStore" class="org.alfresco.repo.content.filestore.FileContentStore">
+      <constructor-arg>
+         <value>${dir.root}/humanresource</value>
+      </constructor-arg>
+   </bean>
+
+   <bean id="storeSelectorContentStore" parent="storeSelectorContentStoreBase">
+       <property name="defaultStoreName">
+            <value>default</value>
+       </property>
+       <property name="storesByName">
+           <map>
+               <entry key="default">
+                   <ref bean="fileContentStore" />
+               </entry>
+               <entry key="Marketing">
+                   <ref bean="projectMarketingContentStore" />
+               </entry>
+               <entry key="HumanResource">
+                   <ref bean="projectHRContentStore" />
+               </entry>
+          </map>
+       </property>
+   </bean>
+
+<!-- Point the ContentService to the 'selector' store -->
+   <bean id="contentService" parent="baseContentService">
+      <property name="store">
+         <ref bean="storeSelectorContentStore" />
+      </property>
+   </bean>
+
+   <!-- Add the other stores to the list of stores for cleaning -->
+   <bean id="eagerContentStoreCleaner" class="org.alfresco.repo.content.cleanup.EagerContentStoreCleaner" init-method="init">
+      <property name="eagerOrphanCleanup" >
+         <value>${system.content.eagerOrphanCleanup}</value>
+      </property>
+      <property name="stores" >
+         <list>
+            <ref bean="fileContentStore" />
+            <ref bean="projectMarketingContentStore" />
+            <ref bean="projectHRContentStore" />
+         </list>
+      </property>
+      <property name="listeners" >
+         <ref bean="deletedContentBackupListeners" />
+      </property>
+   </bean>
+   
+</beans>
